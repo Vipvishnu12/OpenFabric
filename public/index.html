@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Auth0 authorization dashboard for the auth-service API" />
+    <title>Auth Service Dashboard</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/vendor/auth0-spa-js.production.js"></script>
+    <script defer src="/app.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <section id="login-screen" class="auth-screen">
+        <div class="auth-panel">
+          <p class="eyebrow">Auth service</p>
+          <h1>Welcome</h1>
+          <p class="auth-copy">
+            Sign in to validate your access token, test authorization decisions, and review the real backend response.
+          </p>
+
+          <div class="auth-actions">
+            <button id="login-primary-button" class="button primary" type="button">Continue with Auth0</button>
+          </div>
+
+          <div id="banner" class="banner hidden" role="status" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <div id="dashboard-shell" class="dashboard-shell hidden">
+        <header class="hero">
+          <div>
+            <p class="eyebrow">Auth service</p>
+            <h1>Authorization dashboard</h1>
+            <p class="hero-copy">
+              Select a method and resource, then check the real authorization decision returned by the backend.
+            </p>
+          </div>
+          <div class="hero-actions">
+            <button id="login-button" class="button primary hidden" type="button">Log in</button>
+            <button id="logout-button" class="button secondary" type="button">Log out</button>
+          </div>
+        </header>
+
+        <div id="dashboard-banner" class="banner hidden" role="status" aria-live="polite"></div>
+
+        <main class="dashboard">
+        <section class="card session-card">
+          <div class="card-head">
+            <h2>Session</h2>
+            <span id="auth-state" class="pill">Loading</span>
+          </div>
+          <dl class="details" id="user-details">
+            <div>
+              <dt>Name</dt>
+              <dd id="user-name">-</dd>
+            </div>
+            <div>
+              <dt>Email</dt>
+              <dd id="user-email">-</dd>
+            </div>
+            <div>
+              <dt>User ID</dt>
+              <dd id="user-sub">-</dd>
+            </div>
+            <div>
+              <dt>Audience</dt>
+              <dd id="auth-audience">-</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="card builder-card">
+          <div class="card-head">
+            <h2>Authorization check</h2>
+            <span class="hint">Uses the real backend /authorize endpoint</span>
+          </div>
+
+          <form id="authorize-form" class="builder-form">
+            <label>
+              <span>Method</span>
+              <select id="method-select" name="method">
+                <option>GET</option>
+                <option>POST</option>
+                <option>PUT</option>
+                <option>PATCH</option>
+                <option>DELETE</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Path</span>
+              <input id="path-input" name="path" type="text" value="/transactions" placeholder="/transactions" />
+            </label>
+
+            <button id="authorize-button" class="button primary" type="submit">Check authorization</button>
+          </form>
+
+          <div class="resource-panel">
+            <h3>Resource presets</h3>
+            <div id="resource-list" class="resource-list"></div>
+          </div>
+        </section>
+
+        <section class="card result-card">
+          <div class="card-head">
+            <h2>Latest response</h2>
+            <span id="request-status" class="pill muted">Idle</span>
+          </div>
+          <pre id="response-body" class="code-block">No request sent yet.</pre>
+        </section>
+
+        <section class="card history-card">
+          <div class="card-head">
+            <h2>Request history</h2>
+            <span class="hint">Last 8 checks</span>
+          </div>
+          <ol id="history-list" class="history-list"></ol>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
