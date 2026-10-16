@@ -53,19 +53,19 @@ const buildValidationErrorResponse = (error: ZodError) => ({
   },
 });
 
-export const listUsers = (_req: Request, res: Response, next: NextFunction): void => {
+export const listUsers = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const users = listUserIds();
+    const users = await listUserIds();
     res.status(200).json({ users });
   } catch (error) {
     next(error);
   }
 };
 
-export const getUserPermissions = (req: Request, res: Response, next: NextFunction): void => {
+export const getUserPermissions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = userIdSchema.parse(req.params.userId);
-    const permissions = getPermissionsByUserId(userId);
+    const permissions = await getPermissionsByUserId(userId);
     res.status(200).json({ user_id: userId, permissions });
   } catch (error) {
     if (error instanceof ZodError) {
@@ -77,11 +77,11 @@ export const getUserPermissions = (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const createUserPermission = (req: Request, res: Response, next: NextFunction): void => {
+export const createUserPermission = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = userIdSchema.parse(req.params.userId);
     const input = createPermissionSchema.parse(req.body);
-    const created = createPermissionForUser(userId, input);
+    const created = await createPermissionForUser(userId, input);
 
     res.status(201).json({
       permission: {
@@ -102,17 +102,17 @@ export const createUserPermission = (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const updatePermission = (req: Request, res: Response, next: NextFunction): void => {
+export const updatePermission = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const permissionId = permissionIdSchema.parse(req.params.permissionId);
     const input = updatePermissionSchema.parse(req.body);
-    const existing = getPermissionById(permissionId);
+    const existing = await getPermissionById(permissionId);
 
     if (!existing) {
       throw new AppError("Permission not found", 404);
     }
 
-    const updated = updatePermissionById(permissionId, {
+    const updated = await updatePermissionById(permissionId, {
       action: input.action ?? (existing.action as "read" | "write" | "delete"),
       resource: input.resource ?? existing.resource,
       effect: input.effect ?? (existing.effect as "allow" | "deny"),
@@ -133,10 +133,10 @@ export const updatePermission = (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const deletePermission = (req: Request, res: Response, next: NextFunction): void => {
+export const deletePermission = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const permissionId = permissionIdSchema.parse(req.params.permissionId);
-    const deleted = deletePermissionById(permissionId);
+    const deleted = await deletePermissionById(permissionId);
 
     if (!deleted) {
       throw new AppError("Permission not found", 404);

@@ -8,6 +8,13 @@ coverage/
 # runtime data and logs
 logs/
 .auth-test/
+.env
+.env.*
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/*.db-journal
+data/*.sqlite-journal
 
 # editor and OS files
 .DS_Store

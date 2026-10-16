@@ -14,9 +14,9 @@ process.on("unhandledRejection", (reason) => {
   process.exit(1);
 });
 
-const start = () => {
+const start = async () => {
   try {
-    initializeDatabase();
+    await initializeDatabase();
 
     const { port } = getAuthConfig();
 
@@ -30,4 +30,4 @@ const start = () => {
   }
 };
 
-start();
+void start();

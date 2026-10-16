@@ -10,6 +10,7 @@ import { exportJWK, generateKeyPair, SignJWT } from "jose";
 import app from "../src/app";
 import { closeDatabase, getDatabase, initializeDatabase } from "../src/db/sqlite";
 import * as permissionRepository from "../src/services/permission.repository";
+import { createPermissionForUser } from "../src/services/permission.repository";
 import { validateAccessToken } from "../src/services/token.service";
 
 describe("JWT access token validation", () => {
@@ -57,11 +58,39 @@ describe("JWT access token validation", () => {
     process.env.PORT = "3000";
     process.env.SQLITE_DB_PATH = databasePath;
 
-    initializeDatabase(databasePath);
+    await initializeDatabase(databasePath);
+
+    await Promise.all([
+      createPermissionForUser(
+        "user123",
+        { action: "read", resource: "transactions", effect: "allow" },
+        databasePath,
+      ),
+      createPermissionForUser(
+        "user123",
+        { action: "delete", resource: "transactions", effect: "deny" },
+        databasePath,
+      ),
+      createPermissionForUser(
+        "user456",
+        { action: "read", resource: "wallets/wallet-789/transactions", effect: "allow" },
+        databasePath,
+      ),
+      createPermissionForUser(
+        "user789",
+        { action: "write", resource: "wallets/*/transactions/*", effect: "allow" },
+        databasePath,
+      ),
+      createPermissionForUser(
+        "admin789",
+        { action: "delete", resource: "*", effect: "allow" },
+        databasePath,
+      ),
+    ]);
   });
 
   afterAll(async () => {
-    closeDatabase(databasePath);
+    await closeDatabase(databasePath);
 
     await new Promise<void>((resolve, reject) => {
       jwksServer.close((error) => {
@@ -235,15 +264,13 @@ describe("JWT access token validation", () => {
 
     expect(response.status).toBe(200);
 
-    const database = getDatabase(databasePath);
-    const row = database
-      .prepare(
-        `SELECT user_id, method, path, action, decision, reason, matched_permissions_json
-         FROM authorization_audit_logs
-         ORDER BY id DESC
-         LIMIT 1`,
-      )
-      .get() as
+    const database = await getDatabase(databasePath);
+    const row = (await database.get(
+      `SELECT user_id, method, path, action, decision, reason, matched_permissions_json
+       FROM authorization_audit_logs
+       ORDER BY id DESC
+       LIMIT 1`,
+    )) as
       | {
           user_id: string;
           method: string;
@@ -266,6 +293,32 @@ describe("JWT access token validation", () => {
         expect.objectContaining({ action: "read", resource: "transactions", effect: "allow" }),
       ]),
     );
+  });
+
+  it.each([
+    ["user123", "GET", "/transactions", "ALLOW"],
+    ["user123", "DELETE", "/transactions/txn-456", "DENY"],
+    ["user456", "GET", "/wallets/wallet-789/transactions", "ALLOW"],
+    ["user789", "POST", "/wallets/wallet-456/transactions/txn-999", "ALLOW"],
+    ["user456", "POST", "/wallets/wallet-789/transactions", "DENY"],
+    ["admin789", "DELETE", "/accounts/acc-123/settings", "ALLOW"],
+  ] as const)("authorizes %s %s %s as %s", async (subject, method, path, expectedDecision) => {
+    const token = await createAccessToken(subject);
+
+    const response = await request(app)
+      .post("/authorize")
+      .send({
+        access_token: token,
+        method,
+        path,
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      decision: expectedDecision,
+      user_id: subject,
+      reason: expect.any(String),
+    });
   });
 
   it("returns 503 when JWKS verification is unavailable", async () => {

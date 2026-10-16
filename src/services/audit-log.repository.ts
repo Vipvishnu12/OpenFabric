@@ -23,17 +23,16 @@ const INSERT_AUDIT_LOG = `
   ) VALUES (?, ?, ?, ?, ?, ?, ?)
 `;
 
-export const insertAuthorizationAuditLog = (input: AuthorizationAuditLogInput, dbPath?: string): void => {
+export const insertAuthorizationAuditLog = async (input: AuthorizationAuditLogInput, dbPath?: string): Promise<void> => {
   if (!input.userId || !input.method || !input.path || !input.action || !input.decision || !input.reason) {
     throw new AppError("Invalid authorization audit payload", 500);
   }
 
   try {
     // Persist the decision snapshot for later review.
-    initializeDatabase(dbPath);
-    const database = getDatabase(dbPath);
-    const statement = database.prepare(INSERT_AUDIT_LOG);
-    statement.run(
+    await initializeDatabase(dbPath);
+    const database = await getDatabase(dbPath);
+    await database.run(INSERT_AUDIT_LOG, [
       input.userId,
       input.method.toUpperCase(),
       input.path,
@@ -41,7 +40,7 @@ export const insertAuthorizationAuditLog = (input: AuthorizationAuditLogInput, d
       input.decision,
       input.reason,
       JSON.stringify(input.matchedPermissions),
-    );
+    ]);
   } catch (error) {
     if (error instanceof AppError) {
       throw error;

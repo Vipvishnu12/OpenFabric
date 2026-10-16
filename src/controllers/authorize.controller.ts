@@ -48,7 +48,7 @@ export const authorize = async (
 
     // Verify the access token and load the caller's permissions.
     const authenticatedUser = await validateAccessToken(validated.access_token);
-    const permissions = getPermissionsByUserId(authenticatedUser.user_id);
+    const permissions = await getPermissionsByUserId(authenticatedUser.user_id);
 
     // Evaluate the request against the permission rules.
     const decision = evaluateAuthorizationDecision({
@@ -64,7 +64,7 @@ export const authorize = async (
     }));
 
     // Persist an audit trail for every authorization decision.
-    insertAuthorizationAuditLog({
+    await insertAuthorizationAuditLog({
       userId: authenticatedUser.user_id,
       method: validated.method,
       path: validated.path,

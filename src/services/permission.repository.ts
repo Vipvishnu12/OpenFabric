@@ -43,21 +43,20 @@ const DELETE_PERMISSION_BY_ID = `
   WHERE id = ?
 `;
 
-const getInitializedDatabase = (dbPath?: string) => {
-  initializeDatabase(dbPath);
+const getInitializedDatabase = async (dbPath?: string) => {
+  await initializeDatabase(dbPath);
   return getDatabase(dbPath);
 };
 
-export const getPermissionsByUserId = (userId: string, dbPath?: string): PermissionRecord[] => {
+export const getPermissionsByUserId = async (userId: string, dbPath?: string): Promise<PermissionRecord[]> => {
   if (typeof userId !== "string" || userId.trim() === "") {
     throw new AppError("Invalid user identity", 500);
   }
 
   try {
     // Read permissions through the shared database bootstrap.
-    const database = getInitializedDatabase(dbPath);
-    const statement = database.prepare(SELECT_PERMISSIONS_BY_USER_ID);
-    return statement.all(userId) as PermissionRecord[];
+    const database = await getInitializedDatabase(dbPath);
+    return (await database.all(SELECT_PERMISSIONS_BY_USER_ID, [userId])) as PermissionRecord[];
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -67,11 +66,10 @@ export const getPermissionsByUserId = (userId: string, dbPath?: string): Permiss
   }
 };
 
-export const listUserIds = (dbPath?: string): string[] => {
+export const listUserIds = async (dbPath?: string): Promise<string[]> => {
   try {
-    const database = getInitializedDatabase(dbPath);
-    const statement = database.prepare(SELECT_DISTINCT_USERS);
-    const rows = statement.all() as Array<{ user_id: string }>;
+    const database = await getInitializedDatabase(dbPath);
+    const rows = (await database.all(SELECT_DISTINCT_USERS)) as Array<{ user_id: string }>;
     return rows.map((row) => row.user_id);
   } catch (error) {
     if (error instanceof AppError) {
@@ -82,11 +80,10 @@ export const listUserIds = (dbPath?: string): string[] => {
   }
 };
 
-export const getPermissionById = (permissionId: number, dbPath?: string): PermissionRecord | null => {
+export const getPermissionById = async (permissionId: number, dbPath?: string): Promise<PermissionRecord | null> => {
   try {
-    const database = getInitializedDatabase(dbPath);
-    const statement = database.prepare(SELECT_PERMISSION_BY_ID);
-    const row = statement.get(permissionId) as PermissionRecord | undefined;
+    const database = await getInitializedDatabase(dbPath);
+    const row = (await database.get(SELECT_PERMISSION_BY_ID, [permissionId])) as PermissionRecord | undefined;
     return row ?? null;
   } catch (error) {
     if (error instanceof AppError) {
@@ -101,57 +98,58 @@ export const createPermissionForUser = (
   userId: string,
   input: PermissionMutationInput,
   dbPath?: string,
-): PermissionRecord => {
-  try {
-    const database = getInitializedDatabase(dbPath);
-    const statement = database.prepare(INSERT_PERMISSION);
-    const result = statement.run(userId, input.action, input.resource, input.effect);
-    const created = getPermissionById(Number(result.lastInsertRowid), dbPath);
+): Promise<PermissionRecord> => {
+  return (async () => {
+    try {
+      const database = await getInitializedDatabase(dbPath);
+      const result = await database.run(INSERT_PERMISSION, [userId, input.action, input.resource, input.effect]);
+      const created = await getPermissionById(Number(result.lastID), dbPath);
 
-    if (!created) {
+      if (!created) {
+        throw new AppError("Failed to create permission", 500);
+      }
+
+      return created;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
       throw new AppError("Failed to create permission", 500);
     }
-
-    return created;
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    }
-
-    throw new AppError("Failed to create permission", 500);
-  }
+  })();
 };
 
 export const updatePermissionById = (
   permissionId: number,
   input: PermissionMutationInput,
   dbPath?: string,
-): PermissionRecord | null => {
-  try {
-    const database = getInitializedDatabase(dbPath);
-    const statement = database.prepare(UPDATE_PERMISSION_BY_ID);
-    const result = statement.run(input.action, input.resource, input.effect, permissionId);
+): Promise<PermissionRecord | null> => {
+  return (async () => {
+    try {
+      const database = await getInitializedDatabase(dbPath);
+      const result = await database.run(UPDATE_PERMISSION_BY_ID, [input.action, input.resource, input.effect, permissionId]);
 
-    if (result.changes === 0) {
-      return null;
+      if (result.changes === 0) {
+        return null;
+      }
+
+      return getPermissionById(permissionId, dbPath);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      throw new AppError("Failed to update permission", 500);
     }
-
-    return getPermissionById(permissionId, dbPath);
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    }
-
-    throw new AppError("Failed to update permission", 500);
-  }
+  })();
 };
 
-export const deletePermissionById = (permissionId: number, dbPath?: string): boolean => {
+export const deletePermissionById = async (permissionId: number, dbPath?: string): Promise<boolean> => {
   try {
-    const database = getInitializedDatabase(dbPath);
-    const statement = database.prepare(DELETE_PERMISSION_BY_ID);
-    const result = statement.run(permissionId);
-    return result.changes > 0;
+    const database = await getInitializedDatabase(dbPath);
+    const result = await database.run(DELETE_PERMISSION_BY_ID, [permissionId]);
+    return (result.changes ?? 0) > 0;
   } catch (error) {
     if (error instanceof AppError) {
       throw error;

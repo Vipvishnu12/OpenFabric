@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 
 import {
   createUserPermission,
@@ -10,10 +10,20 @@ import {
 
 const router = Router();
 
-router.get("/permissions/users", listUsers);
-router.get("/permissions/users/:userId", getUserPermissions);
-router.post("/permissions/users/:userId", createUserPermission);
-router.patch("/permissions/:permissionId", updatePermission);
-router.delete("/permissions/:permissionId", deletePermission);
+router.get("/permissions/users", (req: Request, res: Response, next: NextFunction) => {
+  void listUsers(req, res, next).catch(next);
+});
+router.get("/permissions/users/:userId", (req: Request, res: Response, next: NextFunction) => {
+  void getUserPermissions(req, res, next).catch(next);
+});
+router.post("/permissions/users/:userId", (req: Request, res: Response, next: NextFunction) => {
+  void createUserPermission(req, res, next).catch(next);
+});
+router.patch("/permissions/:permissionId", (req: Request, res: Response, next: NextFunction) => {
+  void updatePermission(req, res, next).catch(next);
+});
+router.delete("/permissions/:permissionId", (req: Request, res: Response, next: NextFunction) => {
+  void deletePermission(req, res, next).catch(next);
+});
 
 export default router;

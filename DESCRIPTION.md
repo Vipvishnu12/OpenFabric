@@ -13,7 +13,7 @@ Important implementation note: the assignment brief uses sample identities such 
 - Node.js, TypeScript, and Express provide the HTTP API and browser dashboard server.
 - Auth0 provides the OAuth2 login flow and access tokens.
 - `jose` verifies RS256 JWT signatures and reads JWKS keys from the Auth0 issuer.
-- SQLite with `better-sqlite3` stores permission rules and audit records in a local database.
+- SQLite with `sqlite` and `sqlite3` stores permission rules and audit records in a local database.
 - Zod validates request payloads before authorization logic runs.
 - Vitest and Supertest exercise JWT validation, authorization rules, API behavior, and SQLite integration.
 - `express-rate-limit` protects the authorization endpoint from repeated requests.
@@ -183,7 +183,7 @@ This gives the service a queryable decision trail, which is useful in a security
 
 Implemented optimizations:
 
-- `src/db/sqlite.ts` caches database connections by resolved path.
+- `src/db/sqlite.ts` caches database connections by resolved path and initializes them asynchronously.
 - Permission and audit queries use prepared statements.
 - `database/schema.sql` creates `idx_user_permissions_user_lookup` for permission lookups.
 - `src/services/token.service.ts` caches JWKS resolvers per issuer.
@@ -228,31 +228,31 @@ Verified results in the current checkout:
 
 ## 15. Project Structure
 
-| File or folder | Responsibility |
-|---|---|
-| `src/app.ts` | Express app composition, static assets, and route mounting |
-| `src/server.ts` | Process startup and database initialization |
-| `src/config/env.ts` | Environment variable parsing and configuration helpers |
-| `src/controllers/authorize.controller.ts` | `POST /authorize` request validation and orchestration |
-| `src/routes/authorize.routes.ts` | Authorization route wiring and rate limiting |
-| `src/services/token.service.ts` | JWT verification and identity extraction |
-| `src/services/authorization.service.ts` | Method mapping, matching, and decision logic |
-| `src/services/permission.repository.ts` | SQLite permission queries and CRUD helpers |
-| `src/services/audit-log.repository.ts` | Authorization audit insertion |
-| `src/db/sqlite.ts` | Database initialization, connection caching, and cleanup |
-| `src/middleware/error-handler.ts` | Shared API error responses and logging |
-| `src/middleware/rate-limit.ts` | Authorization endpoint rate limiting |
-| `public/index.html` | Browser dashboard layout |
-| `public/app.js` | Auth0 login flow and dashboard behavior |
-| `database/schema.sql` | SQLite schema and index definitions |
-| `database/seed.sql` | Seed permission data |
-| `tests/` | Vitest and Supertest coverage |
+|             File or folder               |                     Responsibility                           |
+|------------------------------------------|--------------------------------------------------------------|
+| `src/app.ts`                             | Express app composition, static assets, and route mounting   |
+| `src/server.ts`                          | Process startup and database initialization                  |
+| `src/config/env.ts`                      | Environment variable parsing and configuration helpers       |
+| `src/controllers/authorize.controller.ts`| `POST /authorize` request validation and orchestration       |
+| `src/routes/authorize.routes.ts`         | Authorization route wiring and rate limiting                 |
+| `src/services/token.service.ts`          | JWT verification and identity extraction                     |
+| `src/services/authorization.service.ts`  | Method mapping, matching, and decision logic                 |
+| `src/services/permission.repository.ts`  | SQLite permission queries and CRUD helpers                   |
+| `src/services/audit-log.repository.ts`   | Authorization audit insertion                                |
+| `src/db/sqlite.ts`                       | Database initialization, connection caching, and cleanup     |
+| `src/middleware/error-handler.ts`        | Shared API error responses and logging                       |
+| `src/middleware/rate-limit.ts`           | Authorization endpoint rate limiting                         |
+| `public/index.html`                      | Browser dashboard layout                                     |
+| `public/app.js`                          | Auth0 login flow and dashboard behavior                      |
+| `database/schema.sql`                    | SQLite schema and index definitions                          |
+| `database/seed.sql`                      | Seed permission data                                         |
+| `tests/`                                 | Vitest and Supertest coverage                                |
 
 ## 16. Assignment Requirement Mapping
 
 | Assignment requirement | Implementation | Relevant files |
-|-------------------------------|---|---|
-| Validate OAuth2 access tokens | RS256 JWT verification with JWKS, issuer, audience, expiry, and `sub` checks | `src/services/token.service.ts`, `tests/token-validation.test.ts` |
+|----------------------------------|---|---|
+| Validate OAuth2 access tokens    | RS256 JWT verification with JWKS, issuer, audience, expiry, and `sub` checks | `src/services/token.service.ts`, `tests/token-validation.test.ts` |
 | Extract user identity from token | Verified `sub` becomes the permission lookup identity | `src/services/token.service.ts`, `src/controllers/authorize.controller.ts` |
 | Query SQLite for permissions | Permission rows are read from `user_permissions` | `src/db/sqlite.ts`, `src/services/permission.repository.ts`, `database/schema.sql` |
 | Map methods to actions | `GET/read`, `POST|PUT|PATCH/write`, `DELETE/delete` | `src/services/authorization.service.ts` |
