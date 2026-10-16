@@ -20,8 +20,13 @@ npm install
 Use the three demo accounts created for the application:
 
 - user2@example.com
+  Password: MvSTn7Uk!4n4rdi
+
 - user3@gmail.com
+  Password: G!jb!pSFM@47muX
+  
 - user4@gmail.com
+  Password:P3NQ#GD!@A2hmBW
 
 The passwords are managed outside the repository.
 
