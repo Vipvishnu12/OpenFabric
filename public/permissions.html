@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Permission management for auth-service" />
+    <title>Auth Service Permission Management</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/permissions.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="header-brand">
+          <span class="brand-name">Auth Service</span>
+          <span class="header-sep">/</span>
+          <span class="header-title">Permission Management</span>
+        </div>
+        <div class="header-actions">
+          <a class="button secondary" href="/">Back to Authorization</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-container">
+      <div id="permissions-banner" class="banner hidden" role="status" aria-live="polite"></div>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h1 class="panel-title">Permission Management</h1>
+          <span id="permissions-status" class="status-indicator">Idle</span>
+        </div>
+
+        <div class="panel-body permissions-layout">
+          <section class="permissions-users" aria-labelledby="users-heading">
+            <h2 id="users-heading" class="permissions-subtitle">Users</h2>
+            <div id="users-empty" class="permissions-empty hidden">No users found.</div>
+            <div id="users-list" class="permissions-user-list"></div>
+          </section>
+
+          <section class="permissions-detail" aria-labelledby="rules-heading">
+            <div class="permissions-detail-head">
+              <h2 id="rules-heading" class="permissions-subtitle">Rules</h2>
+              <span id="selected-user" class="permissions-selected-user">Select a user</span>
+            </div>
+
+            <form id="add-permission-form" class="request-form permissions-form" novalidate>
+              <div class="form-row">
+                <div class="field-group field-method">
+                  <label for="new-action" class="field-label">Action</label>
+                  <select id="new-action" class="form-select">
+                    <option value="read">read</option>
+                    <option value="write">write</option>
+                    <option value="delete">delete</option>
+                  </select>
+                </div>
+
+                <div class="field-group field-path">
+                  <label for="new-resource" class="field-label">Resource</label>
+                  <input id="new-resource" class="form-input mono" type="text" placeholder="wallets/*/transactions/*" />
+                </div>
+
+                <div class="field-group field-method">
+                  <label for="new-effect" class="field-label">Effect</label>
+                  <select id="new-effect" class="form-select">
+                    <option value="allow">ALLOW</option>
+                    <option value="deny">DENY</option>
+                  </select>
+                </div>
+
+                <div class="field-group field-submit">
+                  <button id="add-permission-button" class="button primary" type="submit">Add Rule</button>
+                </div>
+              </div>
+            </form>
+
+            <div class="table-wrapper">
+              <table class="history-table permissions-table">
+                <thead>
+                  <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Action</th>
+                    <th scope="col">Resource</th>
+                    <th scope="col">Effect</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="permissions-rows">
+                  <tr class="history-empty-row">
+                    <td colspan="5" class="empty-cell">Select a user to view permissions.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import authorizeRoutes from "./routes/authorize.routes";
 import publicRoutes from "./routes/public.routes";
+import permissionsRoutes from "./routes/permissions.routes";
 import { errorHandler } from "./middleware/error-handler";
 import { logger } from "./utils/logger";
 
@@ -33,6 +34,7 @@ export const createApp = () => {
 
   // Mount the authorization endpoint group.
   app.use(authorizeRoutes);
+  app.use(permissionsRoutes);
 
   // Convert malformed JSON into a clean client response.
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
@@ -57,4 +59,6 @@ export const createApp = () => {
   return app;
 };
 
-export default createApp();
+const app = createApp();
+
+export default app;

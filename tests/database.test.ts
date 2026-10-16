@@ -49,12 +49,16 @@ describe("SQLite integration", () => {
   });
 
   it("fetches permissions for an existing user", () => {
-    const permissions = getPermissionsByUserId("user123", databasePath);
+    const permissions = getPermissionsByUserId("user2@example.com", databasePath);
 
     expect(permissions).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ user_id: "user123", action: "read", resource: "transactions", effect: "allow" }),
-        expect.objectContaining({ user_id: "user123", action: "write", resource: "transactions", effect: "allow" }),
+        expect.objectContaining({
+          user_id: "user2@example.com",
+          action: "read",
+          resource: "transactions",
+          effect: "allow",
+        }),
       ]),
     );
   });
@@ -71,7 +75,7 @@ describe("SQLite integration", () => {
     const database = getDatabase(databasePath);
     const result = database.prepare("SELECT COUNT(*) AS count FROM user_permissions").get() as { count: number };
 
-    expect(result.count).toBe(15);
+    expect(result.count).toBe(3);
   });
 
   it("creates the lookup index used by permission queries", () => {
@@ -94,6 +98,6 @@ describe("SQLite integration", () => {
     fs.mkdirSync(badPath);
 
     expect(() => getPermissionsByUserId("user123", badPath)).toThrow(AppError);
-    expect(() => getPermissionsByUserId("user123", badPath)).toThrow("Database connection failed");
+    expect(() => getPermissionsByUserId("user2@example.com", badPath)).toThrow("Database connection failed");
   });
 });

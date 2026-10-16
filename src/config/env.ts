@@ -14,16 +14,16 @@ export interface DatabaseConfig {
   sqliteDbPath: string;
 }
 
+export interface RateLimitConfig {
+  windowMs: number;
+  maxRequests: number;
+}
+
 export interface FrontendConfig {
   apiBaseUrl: string;
   auth0Audience: string;
   auth0ClientId: string;
   auth0Domain: string;
-}
-
-export interface RateLimitConfig {
-  windowMs: number;
-  maxRequests: number;
 }
 
 const getRequiredEnv = (name: string): string => {
@@ -34,11 +34,6 @@ const getRequiredEnv = (name: string): string => {
   }
 
   return value.trim();
-};
-
-const getOptionalEnv = (name: string): string => {
-  const value = process.env[name];
-  return value ? value.trim() : "";
 };
 
 const isTruthyEnvValue = (value: string | undefined): boolean => {
@@ -71,31 +66,19 @@ export const getDatabaseConfig = (): DatabaseConfig => ({
   sqliteDbPath: (process.env.SQLITE_DB_PATH ?? "data/permissions.db").trim() || "data/permissions.db",
 });
 
-const getNumberEnv = (name: string, fallback: number): number => {
-  const rawValue = process.env[name];
-
-  if (rawValue === undefined || rawValue.trim() === "") {
-    return fallback;
-  }
-
-  const parsedValue = Number(rawValue);
-  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
-};
-
-export const getRateLimitConfig = (): RateLimitConfig => ({
-  windowMs: getNumberEnv("AUTH_RATE_LIMIT_WINDOW_MS", 60_000),
-  maxRequests: getNumberEnv("AUTH_RATE_LIMIT_MAX_REQUESTS", 20),
-});
-
-export const getFrontendConfig = (): FrontendConfig => {
-  const auth0Audience = getOptionalEnv("AUTH0_AUDIENCE");
-  const auth0ClientId = getOptionalEnv("AUTH0_CLIENT_ID");
-  const issuerUrl = getOptionalEnv("AUTH0_ISSUER_URL");
+export const getRateLimitConfig = (): RateLimitConfig => {
+  const windowMs = Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS ?? "60000");
+  const maxRequests = Number(process.env.AUTH_RATE_LIMIT_MAX_REQUESTS ?? "60");
 
   return {
-    apiBaseUrl: (process.env.PUBLIC_API_BASE_URL ?? "").trim(),
-    auth0Audience,
-    auth0ClientId,
-    auth0Domain: issuerUrl ? getAuth0Domain(issuerUrl) : "",
+    windowMs: Number.isFinite(windowMs) && windowMs > 0 ? windowMs : 60000,
+    maxRequests: Number.isFinite(maxRequests) && maxRequests > 0 ? maxRequests : 60,
   };
 };
+
+export const getFrontendConfig = (): FrontendConfig => ({
+  apiBaseUrl: (process.env.PUBLIC_API_BASE_URL ?? "").trim(),
+  auth0Audience: getRequiredEnv("AUTH0_AUDIENCE"),
+  auth0ClientId: getRequiredEnv("AUTH0_CLIENT_ID"),
+  auth0Domain: getAuth0Domain(getRequiredEnv("AUTH0_ISSUER_URL")),
+});

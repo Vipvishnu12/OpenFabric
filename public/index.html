@@ -10,114 +10,193 @@
     <script defer src="/app.js"></script>
   </head>
   <body>
-    <div class="page-shell">
-      <section id="login-screen" class="auth-screen">
-        <div class="auth-panel">
-          <p class="eyebrow">Auth service</p>
-          <h1>Welcome</h1>
-          <p class="auth-copy">
-            Sign in to validate your access token, test authorization decisions, and review the real backend response.
-          </p>
+    <!-- Unauthenticated Login View -->
+    <section id="login-screen" class="auth-screen">
+      <div class="auth-panel">
+        <div class="brand-eyebrow">Auth Service</div>
+        <h1 class="auth-title">Sign in to continue</h1>
+        <p class="auth-copy">
+          Use Auth0 to sign in and securely test authorization decisions for your API requests.
+        </p>
 
-          <div class="auth-actions">
-            <button id="login-primary-button" class="button primary" type="button">Continue with Auth0</button>
-          </div>
-
-          <div id="banner" class="banner hidden" role="status" aria-live="polite"></div>
+        <div class="auth-actions">
+          <button id="login-primary-button" class="button primary" type="button">Continue with Auth0</button>
+          <a class="button secondary" href="/permissions.html">Manage Permissions</a>
         </div>
-      </section>
 
-      <div id="dashboard-shell" class="dashboard-shell hidden">
-        <header class="hero">
-          <div>
-            <p class="eyebrow">Auth service</p>
-            <h1>Authorization dashboard</h1>
-            <p class="hero-copy">
-              Select a method and resource, then check the real authorization decision returned by the backend.
-            </p>
+        <div id="banner" class="banner hidden" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- Authenticated Dashboard View -->
+    <div id="dashboard-shell" class="dashboard-shell hidden">
+      <header class="app-header">
+        <div class="header-inner">
+          <div class="header-brand">
+            <span class="brand-name">Auth Service</span>
+            <span class="header-sep">/</span>
+            <span class="header-title">Authorization</span>
           </div>
-          <div class="hero-actions">
-            <button id="login-button" class="button primary hidden" type="button">Log in</button>
+          <div class="header-actions">
+            <button id="login-button" class="button secondary hidden" type="button">Log in</button>
             <button id="logout-button" class="button secondary" type="button">Log out</button>
           </div>
-        </header>
+        </div>
+      </header>
 
+      <div class="page-container">
         <div id="dashboard-banner" class="banner hidden" role="status" aria-live="polite"></div>
 
-        <main class="dashboard">
-        <section class="card session-card">
-          <div class="card-head">
-            <h2>Session</h2>
-            <span id="auth-state" class="pill">Loading</span>
+        <!-- Session Metadata Strip -->
+        <section class="panel session-panel" aria-labelledby="session-heading">
+          <div class="panel-header">
+            <h2 id="session-heading" class="panel-title">Session</h2>
+            <span id="auth-state" class="badge">Loading</span>
           </div>
-          <dl class="details" id="user-details">
-            <div>
+          <dl class="session-grid" id="user-details">
+            <div class="session-item">
               <dt>Name</dt>
               <dd id="user-name">-</dd>
             </div>
-            <div>
+            <div class="session-item">
               <dt>Email</dt>
               <dd id="user-email">-</dd>
             </div>
-            <div>
+            <div class="session-item">
               <dt>User ID</dt>
-              <dd id="user-sub">-</dd>
+              <dd id="user-sub" class="mono truncate" title="">-</dd>
             </div>
-            <div>
+            <div class="session-item">
               <dt>Audience</dt>
-              <dd id="auth-audience">-</dd>
+              <dd id="auth-audience" class="mono truncate" title="">-</dd>
             </div>
           </dl>
         </section>
 
-        <section class="card builder-card">
-          <div class="card-head">
-            <h2>Authorization check</h2>
-            <span class="hint">Uses the real backend /authorize endpoint</span>
-          </div>
+        <!-- Main Workspace: Request Builder & Response Viewer -->
+        <main class="dashboard-grid">
+          <!-- Authorization Request Panel -->
+          <section class="panel builder-panel" aria-labelledby="builder-heading">
+            <div class="panel-header">
+              <h2 id="builder-heading" class="panel-title">Authorization check</h2>
+              <span class="panel-hint">POST /authorize</span>
+            </div>
 
-          <form id="authorize-form" class="builder-form">
-            <label>
-              <span>Method</span>
-              <select id="method-select" name="method">
-                <option>GET</option>
-                <option>POST</option>
-                <option>PUT</option>
-                <option>PATCH</option>
-                <option>DELETE</option>
-              </select>
-            </label>
+            <div class="panel-body">
+              <form id="authorize-form" class="request-form">
+                <div class="form-row">
+                  <div class="field-group field-method">
+                    <label for="method-select" class="field-label">Method</label>
+                    <select id="method-select" name="method" class="form-select">
+                      <option>GET</option>
+                      <option>POST</option>
+                      <option>PUT</option>
+                      <option>PATCH</option>
+                      <option>DELETE</option>
+                    </select>
+                  </div>
 
-            <label>
-              <span>Path</span>
-              <input id="path-input" name="path" type="text" value="/transactions" placeholder="/transactions" />
-            </label>
+                  <div class="field-group field-path">
+                    <label for="path-input" class="field-label">Path</label>
+                    <input
+                      id="path-input"
+                      name="path"
+                      type="text"
+                      class="form-input mono"
+                      value="/transactions"
+                      placeholder="/transactions"
+                      spellcheck="false"
+                      autocomplete="off"
+                    />
+                  </div>
 
-            <button id="authorize-button" class="button primary" type="submit">Check authorization</button>
-          </form>
+                  <div class="field-group field-submit">
+                    <button id="authorize-button" class="button primary" type="submit">Check authorization</button>
+                  </div>
+                </div>
+              </form>
 
-          <div class="resource-panel">
-            <h3>Resource presets</h3>
-            <div id="resource-list" class="resource-list"></div>
-          </div>
-        </section>
+              <div class="presets-container">
+                <div class="presets-header">
+                  <span class="presets-title">Resource presets</span>
+                  <span class="presets-hint">Click to populate request</span>
+                </div>
+                <div id="resource-list" class="preset-list"></div>
+              </div>
+            </div>
+          </section>
 
-        <section class="card result-card">
-          <div class="card-head">
-            <h2>Latest response</h2>
-            <span id="request-status" class="pill muted">Idle</span>
-          </div>
-          <pre id="response-body" class="code-block">No request sent yet.</pre>
-        </section>
+          <!-- Latest Response Panel -->
+          <section class="panel result-panel" aria-labelledby="result-heading">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <h2 id="result-heading" class="panel-title">Latest response</h2>
+                <span id="response-decision-badge" class="decision-badge hidden">-</span>
+              </div>
+              <span id="request-status" class="status-indicator">Idle</span>
+            </div>
 
-        <section class="card history-card">
-          <div class="card-head">
-            <h2>Request history</h2>
-            <span class="hint">Last 8 checks</span>
-          </div>
-          <ol id="history-list" class="history-list"></ol>
-        </section>
-      </main>
+            <div class="panel-body">
+              <!-- Structured backend response summary -->
+              <div id="response-meta" class="response-meta hidden">
+                <div class="meta-row">
+                  <div class="meta-item">
+                    <span class="meta-label">HTTP Status</span>
+                    <span id="meta-status" class="meta-val">-</span>
+                  </div>
+                  <div class="meta-item meta-wide">
+                    <span class="meta-label">Reason</span>
+                    <span id="meta-reason" class="meta-val">-</span>
+                  </div>
+                </div>
+                <div id="meta-permissions-row" class="meta-row">
+                  <div class="meta-item meta-wide">
+                    <span class="meta-label">Matched permissions</span>
+                    <span id="meta-permissions" class="meta-val mono">-</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Monospace JSON payload viewer -->
+              <div class="code-container">
+                <div class="code-header">
+                  <span class="code-label">Payload (JSON)</span>
+                </div>
+                <pre id="response-body" class="code-block empty">No request sent yet. Select a method and path above to test authorization.</pre>
+              </div>
+            </div>
+          </section>
+
+          <!-- Request History Panel -->
+          <section class="panel history-panel" aria-labelledby="history-heading">
+            <div class="panel-header">
+              <h2 id="history-heading" class="panel-title">Request history</h2>
+              <span class="panel-hint">Recent checks (last 8)</span>
+            </div>
+
+            <div class="panel-body panel-body-flush">
+              <div class="table-wrapper">
+                <table class="history-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="col-time">Time</th>
+                      <th scope="col" class="col-method">Method</th>
+                      <th scope="col" class="col-path">Resource path</th>
+                      <th scope="col" class="col-decision">Decision</th>
+                      <th scope="col" class="col-details">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody id="history-list">
+                    <tr class="history-empty-row">
+                      <td colspan="5" class="empty-cell">No authorization checks performed yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
     </div>
   </body>
 </html>

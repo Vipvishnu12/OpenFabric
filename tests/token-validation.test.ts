@@ -78,7 +78,7 @@ describe("JWT access token validation", () => {
   });
 
   beforeEach(async () => {
-    validToken = await createAccessToken("user123");
+    validToken = await createAccessToken("user2@example.com");
   });
 
   const createAccessToken = async (subject: string): Promise<string> =>
@@ -93,8 +93,8 @@ describe("JWT access token validation", () => {
   it("validates a signed JWT with the expected issuer and audience", async () => {
     const result = await validateAccessToken(validToken);
 
-    expect(result.user_id).toBe("user123");
-    expect(result.claims.sub).toBe("user123");
+    expect(result.user_id).toBe("user2@example.com");
+    expect(result.claims.sub).toBe("user2@example.com");
   });
 
   it("rejects an expired token", async () => {
@@ -173,13 +173,13 @@ describe("JWT access token validation", () => {
   });
 
   it.each([
-    ["user123", "GET", "/transactions", "ALLOW"],
-    ["user123", "DELETE", "/transactions/txn-456", "DENY"],
-    ["user456", "GET", "/wallets/wallet-789/transactions", "ALLOW"],
-    ["user789", "POST", "/wallets/wallet-456/transactions/txn-999", "ALLOW"],
-    ["user456", "POST", "/wallets/wallet-789/transactions", "DENY"],
-    ["admin789", "DELETE", "/accounts/acc-123/settings", "ALLOW"],
-    ["user123", "GET", "/unmatched/resource", "DENY"],
+    ["user2@example.com", "GET", "/transactions", "ALLOW"],
+    ["user2@example.com", "DELETE", "/transactions/txn-456", "DENY"],
+    ["user3@gmail.com", "GET", "/wallets/wallet-789/transactions", "ALLOW"],
+    ["user4@gmail.com", "POST", "/wallets/wallet-456/transactions/txn-999", "ALLOW"],
+    ["user3@gmail.com", "POST", "/wallets/wallet-789/transactions", "DENY"],
+    ["user4@gmail.com", "DELETE", "/accounts/acc-123/settings", "DENY"],
+    ["user2@example.com", "GET", "/unmatched/resource", "DENY"],
   ] as const)("authorizes %s %s %s as %s", async (subject, method, path, expectedDecision) => {
     // Cover the authorization matrix with real requests.
     const token = await createAccessToken(subject);
@@ -223,7 +223,7 @@ describe("JWT access token validation", () => {
   });
 
   it("writes an authorization audit log for permission decisions", async () => {
-    const token = await createAccessToken("user123");
+    const token = await createAccessToken("user2@example.com");
 
     const response = await request(app)
       .post("/authorize")
@@ -256,7 +256,7 @@ describe("JWT access token validation", () => {
       | undefined;
 
     expect(row).toBeDefined();
-    expect(row?.user_id).toBe("user123");
+    expect(row?.user_id).toBe("user2@example.com");
     expect(row?.method).toBe("GET");
     expect(row?.path).toBe("/transactions");
     expect(row?.decision).toBe("ALLOW");

@@ -1,9 +1,68 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import app from "../src/app";
 
+const previousEnv = {
+  auth0IssuerUrl: process.env.AUTH0_ISSUER_URL,
+  auth0Audience: process.env.AUTH0_AUDIENCE,
+  auth0ClientId: process.env.AUTH0_CLIENT_ID,
+  publicApiBaseUrl: process.env.PUBLIC_API_BASE_URL,
+};
+
+beforeAll(() => {
+  process.env.AUTH0_ISSUER_URL = "https://example.auth0.com/";
+  process.env.AUTH0_AUDIENCE = "https://api.example.com";
+  process.env.AUTH0_CLIENT_ID = "frontend-client-id";
+  process.env.PUBLIC_API_BASE_URL = "";
+});
+
+afterAll(() => {
+  if (previousEnv.auth0IssuerUrl === undefined) {
+    delete process.env.AUTH0_ISSUER_URL;
+  } else {
+    process.env.AUTH0_ISSUER_URL = previousEnv.auth0IssuerUrl;
+  }
+
+  if (previousEnv.auth0Audience === undefined) {
+    delete process.env.AUTH0_AUDIENCE;
+  } else {
+    process.env.AUTH0_AUDIENCE = previousEnv.auth0Audience;
+  }
+
+  if (previousEnv.auth0ClientId === undefined) {
+    delete process.env.AUTH0_CLIENT_ID;
+  } else {
+    process.env.AUTH0_CLIENT_ID = previousEnv.auth0ClientId;
+  }
+
+  if (previousEnv.publicApiBaseUrl === undefined) {
+    delete process.env.PUBLIC_API_BASE_URL;
+  } else {
+    process.env.PUBLIC_API_BASE_URL = previousEnv.publicApiBaseUrl;
+  }
+});
+
 describe("Auth service API", () => {
+  it("GET /config returns public frontend settings", async () => {
+    const response = await request(app).get("/config");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      auth0Audience: "https://api.example.com",
+      auth0ClientId: "frontend-client-id",
+      auth0Domain: "example.auth0.com",
+    });
+  });
+
+  it("GET / serves the dashboard shell", async () => {
+    const response = await request(app).get("/");
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain("Continue with Auth0");
+    expect(response.text).toContain("/app.js");
+  });
+
   it("GET /health returns service status", async () => {
     const response = await request(app).get("/health");
 
