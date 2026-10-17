@@ -31,6 +31,10 @@
           <span id="permissions-status" class="status-indicator">Idle</span>
         </div>
 
+        <div id="permissions-identity-note" class="banner banner-warning" role="status" aria-live="polite">
+          Authorization decisions use the exact user_id value from the validated JWT subject (Auth0 sub). A rule will only apply when the logged-in user matches that same value.
+        </div>
+
         <div class="panel-body permissions-layout">
           <section class="permissions-users" aria-labelledby="users-heading">
             <h2 id="users-heading" class="permissions-subtitle">Users</h2>

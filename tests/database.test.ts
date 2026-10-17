@@ -49,12 +49,12 @@ describe("SQLite integration", () => {
   });
 
   it("fetches permissions for an existing user", async () => {
-    const permissions = await getPermissionsByUserId("user2@example.com", databasePath);
+    const permissions = await getPermissionsByUserId("auth0|6acf0f80347c3a318a08e379", databasePath);
 
     expect(permissions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          user_id: "user2@example.com",
+          user_id: "auth0|6acf0f80347c3a318a08e379",
           action: "read",
           resource: "transactions",
           effect: "allow",

@@ -294,6 +294,19 @@ const handleRedirect = async () => {
   window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
 };
 
+const persistCurrentUser = (user) => {
+  const storageKey = "auth_service_current_user_id";
+
+  if (!user?.sub) {
+    sessionStorage.removeItem(storageKey);
+    localStorage.removeItem(storageKey);
+    return;
+  }
+
+  sessionStorage.setItem(storageKey, user.sub);
+  localStorage.setItem(storageKey, user.sub);
+};
+
 const refreshSession = async () => {
   ensureAuthClient();
 
@@ -301,9 +314,11 @@ const refreshSession = async () => {
 
   if (isAuthenticated) {
     state.user = await state.auth0.getUser();
+    persistCurrentUser(state.user);
     setBanner(`Signed in as ${state.user.name || state.user.email || state.user.sub}`, "success", "dashboard");
   } else {
     state.user = null;
+    persistCurrentUser(null);
   }
 
   renderUser();
@@ -334,6 +349,7 @@ const logout = () => {
     ensureAuthClient();
     clearBanner("login");
     clearBanner("dashboard");
+    sessionStorage.removeItem("auth_service_current_user_id");
     state.auth0.logout({
       logoutParams: {
         returnTo: window.location.origin,

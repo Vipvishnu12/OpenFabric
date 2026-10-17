@@ -107,7 +107,7 @@ describe("JWT access token validation", () => {
   });
 
   beforeEach(async () => {
-    validToken = await createAccessToken("user2@example.com");
+    validToken = await createAccessToken("auth0|6acf0f80347c3a318a08e379");
   });
 
   const createAccessToken = async (subject: string): Promise<string> =>
@@ -122,8 +122,8 @@ describe("JWT access token validation", () => {
   it("validates a signed JWT with the expected issuer and audience", async () => {
     const result = await validateAccessToken(validToken);
 
-    expect(result.user_id).toBe("user2@example.com");
-    expect(result.claims.sub).toBe("user2@example.com");
+    expect(result.user_id).toBe("auth0|6acf0f80347c3a318a08e379");
+    expect(result.claims.sub).toBe("auth0|6acf0f80347c3a318a08e379");
   });
 
   it("rejects an expired token", async () => {
@@ -202,13 +202,13 @@ describe("JWT access token validation", () => {
   });
 
   it.each([
-    ["user2@example.com", "GET", "/transactions", "ALLOW"],
-    ["user2@example.com", "DELETE", "/transactions/txn-456", "DENY"],
-    ["user3@gmail.com", "GET", "/wallets/wallet-789/transactions", "ALLOW"],
-    ["user4@gmail.com", "POST", "/wallets/wallet-456/transactions/txn-999", "ALLOW"],
-    ["user3@gmail.com", "POST", "/wallets/wallet-789/transactions", "DENY"],
-    ["user4@gmail.com", "DELETE", "/accounts/acc-123/settings", "DENY"],
-    ["user2@example.com", "GET", "/unmatched/resource", "DENY"],
+    ["auth0|6acf0f80347c3a318a08e379", "GET", "/transactions", "ALLOW"],
+    ["auth0|6acf0f80347c3a318a08e379", "DELETE", "/transactions/txn-456", "DENY"],
+    ["auth0|6acf0fae620fbdf352e40234", "GET", "/wallets/wallet-789/transactions", "ALLOW"],
+    ["auth0|6acf11141830a1fdcf3c92a6", "POST", "/wallets/wallet-456/transactions/txn-999", "ALLOW"],
+    ["auth0|6acf0fae620fbdf352e40234", "POST", "/wallets/wallet-789/transactions", "DENY"],
+    ["auth0|6acf11141830a1fdcf3c92a6", "DELETE", "/accounts/acc-123/settings", "DENY"],
+    ["auth0|6acf0f80347c3a318a08e379", "GET", "/unmatched/resource", "DENY"],
   ] as const)("authorizes %s %s %s as %s", async (subject, method, path, expectedDecision) => {
     // Cover the authorization matrix with real requests.
     const token = await createAccessToken(subject);
@@ -252,7 +252,7 @@ describe("JWT access token validation", () => {
   });
 
   it("writes an authorization audit log for permission decisions", async () => {
-    const token = await createAccessToken("user2@example.com");
+    const token = await createAccessToken("auth0|6acf0f80347c3a318a08e379");
 
     const response = await request(app)
       .post("/authorize")
@@ -283,7 +283,7 @@ describe("JWT access token validation", () => {
       | undefined;
 
     expect(row).toBeDefined();
-    expect(row?.user_id).toBe("user2@example.com");
+    expect(row?.user_id).toBe("auth0|6acf0f80347c3a318a08e379");
     expect(row?.method).toBe("GET");
     expect(row?.path).toBe("/transactions");
     expect(row?.decision).toBe("ALLOW");

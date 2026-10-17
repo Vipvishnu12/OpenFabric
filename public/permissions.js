@@ -1,3 +1,66 @@
+const DEMO_USER_IDS = [
+  "auth0|6acf0f80347c3a318a08e379",
+  "auth0|6acf0fae620fbdf352e40234",
+  "auth0|6acf11141830a1fdcf3c92a6",
+];
+
+const getCurrentSessionUserId = () => {
+  const storageKey = "auth_service_current_user_id";
+
+  try {
+    const sessionValue = sessionStorage.getItem(storageKey);
+    if (sessionValue && sessionValue.trim()) {
+      return sessionValue.trim();
+    }
+  } catch {
+    // ignore and fall through to localStorage
+  }
+
+  try {
+    const localValue = localStorage.getItem(storageKey);
+    if (localValue && localValue.trim()) {
+      return localValue.trim();
+    }
+  } catch {
+    // ignore
+  }
+
+  return "";
+};
+
+const normalizeUserKey = (value) => String(value ?? "").trim().toLowerCase();
+
+const getPreferredUsers = (userIds = []) => {
+  const currentUserId = getCurrentSessionUserId();
+  const unique = new Set();
+  const ordered = [];
+
+  const append = (userId) => {
+    if (typeof userId !== "string") {
+      return;
+    }
+
+    const trimmed = userId.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const key = normalizeUserKey(trimmed);
+    if (unique.has(key)) {
+      return;
+    }
+
+    unique.add(key);
+    ordered.push(trimmed);
+  };
+
+  append(currentUserId);
+  DEMO_USER_IDS.forEach(append);
+  (Array.isArray(userIds) ? userIds : []).forEach(append);
+
+  return ordered;
+};
+
 const state = {
   users: [],
   selectedUserId: "",
@@ -8,6 +71,7 @@ const state = {
 const dom = {
   banner: document.getElementById("permissions-banner"),
   status: document.getElementById("permissions-status"),
+  identityNote: document.getElementById("permissions-identity-note"),
   usersList: document.getElementById("users-list"),
   usersEmpty: document.getElementById("users-empty"),
   selectedUser: document.getElementById("selected-user"),
@@ -42,6 +106,19 @@ const setBusy = (busy, message = "Idle") => {
   if (dom.addButton) {
     dom.addButton.disabled = busy || !state.selectedUserId;
   }
+};
+
+const syncIdentityGuidance = (userId) => {
+  if (!dom.identityNote) {
+    return;
+  }
+
+  if (!userId) {
+    dom.identityNote.textContent = "Select a user to view the stored permission rows. Authorization checks always use the exact Auth0 subject value from the JWT.";
+    return;
+  }
+
+  dom.identityNote.textContent = `Selected user_id: ${userId}. Authorization checks use that exact value from the validated JWT subject, so this permission set only applies when the logged-in user matches it.`;
 };
 
 const fetchJson = async (url, options = {}) => {
@@ -211,15 +288,21 @@ const renderPermissions = () => {
 
 const loadUsers = async () => {
   const payload = await fetchJson("/permissions/users");
-  state.users = Array.isArray(payload?.users) ? payload.users : [];
+  const rawUsers = Array.isArray(payload?.users) ? payload.users : [];
+  const currentUserId = getCurrentSessionUserId();
+  state.users = getPreferredUsers(rawUsers);
   renderUsers();
 
   if (!state.selectedUserId && state.users.length > 0) {
-    state.selectedUserId = state.users[0];
+    state.selectedUserId = currentUserId || state.users[0];
   }
 
   if (state.selectedUserId && !state.users.includes(state.selectedUserId)) {
-    state.selectedUserId = state.users[0] || "";
+    state.selectedUserId = currentUserId || state.users[0] || "";
+  }
+
+  if (state.selectedUserId) {
+    syncIdentityGuidance(state.selectedUserId);
   }
 };
 
@@ -240,6 +323,7 @@ const selectUser = async (userId) => {
   if (dom.selectedUser) {
     dom.selectedUser.textContent = userId;
   }
+  syncIdentityGuidance(userId);
   renderUsers();
 
   try {
@@ -298,8 +382,10 @@ const init = async () => {
       if (dom.selectedUser) {
         dom.selectedUser.textContent = state.selectedUserId;
       }
+      syncIdentityGuidance(state.selectedUserId);
       await loadPermissions(state.selectedUserId);
     } else {
+      syncIdentityGuidance("");
       renderPermissions();
     }
 

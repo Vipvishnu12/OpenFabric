@@ -30,17 +30,25 @@ describe("Permission management API", () => {
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body.users)).toBe(true);
-    expect(response.body.users).toEqual(expect.arrayContaining(["user2@example.com", "user3@gmail.com", "user4@gmail.com"]));
+    expect(response.body.users).toEqual(
+      expect.arrayContaining([
+        "auth0|6acf0f80347c3a318a08e379",
+        "auth0|6acf0fae620fbdf352e40234",
+        "auth0|6acf11141830a1fdcf3c92a6",
+      ]),
+    );
   });
 
   it("creates, updates, and deletes a permission", async () => {
+    const userId = "auth0|6acf0f80347c3a318a08e379";
+
     const createResponse = await request(app)
-      .post("/permissions/users/user2@example.com")
+      .post(`/permissions/users/${userId}`)
       .send({ action: "read", resource: "permissions/test-resource", effect: "allow" });
 
     expect(createResponse.status).toBe(201);
     expect(createResponse.body.permission).toMatchObject({
-      user_id: "user2@example.com",
+      user_id: userId,
       action: "read",
       resource: "permissions/test-resource",
       effect: "allow",
@@ -59,7 +67,7 @@ describe("Permission management API", () => {
       resource: "permissions/test-resource-updated",
     });
 
-    const readResponse = await request(app).get("/permissions/users/user2@example.com");
+    const readResponse = await request(app).get(`/permissions/users/${userId}`);
     expect(readResponse.status).toBe(200);
     expect(readResponse.body.permissions).toEqual(
       expect.arrayContaining([
@@ -74,7 +82,7 @@ describe("Permission management API", () => {
     const deleteResponse = await request(app).delete(`/permissions/${permissionId}`);
     expect(deleteResponse.status).toBe(204);
 
-    const readAfterDeleteResponse = await request(app).get("/permissions/users/user2@example.com");
+    const readAfterDeleteResponse = await request(app).get(`/permissions/users/${userId}`);
     expect(readAfterDeleteResponse.status).toBe(200);
     expect(readAfterDeleteResponse.body.permissions).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ id: permissionId })]),
